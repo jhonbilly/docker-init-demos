@@ -2,7 +2,7 @@ trigger:
   - main
 
 pool:
-  name: wsl-agent
+  name: Prueba-dummy
 
 variables:
   dockerRegistryServiceConnection: 'DockerHubServiceConnection'
@@ -11,7 +11,7 @@ variables:
   tag: '$(Build.BuildId)'
   SONAR_HOST_URL: 'http://172.20.38.158:9000'
   SONAR_PROJECT_KEY: 'docker-getting-started'
-  -group: sonarqube
+  SONAR_TOKEN: 'f4926fec98e5dd8491fd55400c0c167711d23aa2'
 
 stages:
   - stage: AnalyzeAndBuild
@@ -19,17 +19,17 @@ stages:
       - job: SonarQubeAnalysis
         steps:
           - script: |
+              cd node/sample
+              npm install || true
               export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
               export PATH=$JAVA_HOME/bin:$PATH
-              cd node/sample
-              npm install
               sonar-scanner \
-                 -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
-                 -Dsonar.sources=. \
-                 -Dsonar.host.url=$(SONAR_HOST_URL) \
-                 -Dsonar.login=$(SONAR_TOKEN)
+                -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
+                -Dsonar.sources=. \
+                -Dsonar.host.url=$(SONAR_HOST_URL) \
+                -Dsonar.login=$(SONAR_TOKEN)
             displayName: 'Run SonarQube Scanner (Local)'
-        
+
       - job: ParallelHello
         strategy:
           parallel: 2
@@ -55,7 +55,7 @@ stages:
               containerRegistry: '$(dockerRegistryServiceConnection)'
               repository: '$(imageRepository)'
               command: 'buildAndPush'
-              Dockerfile: '**/Dockerfile'
+              Dockerfile: 'node/sample/Dockerfile'
               tags: |
                 $(tag)
 
