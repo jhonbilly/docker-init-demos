@@ -1,0 +1,82 @@
+trigger:
+  - main
+
+pool:
+  name: Prueba-Dummy
+
+variables:
+  dockerRegistryServiceConnection: 'DockerHubServiceConnection'
+  imageRepository: 'docker-getting-started'
+  containerRegistry: 'yourdockeruser'
+  dockerfilePath: 'Dockerfile'
+  tag: '$(Build.BuildId)'
+
+stages:
+  - stage: BuildAndAnalyze
+    jobs:
+      - job: SonarQubeAnalysis
+        steps:
+          - task: SonarQubePrepare@5
+            inputs:
+              SonarQube: 'SonarQubeServiceConnection'
+              projectKey: 'docker-getting-started'
+              scannerMode: 'CLI'
+          - script: npm install
+          - script: sonar-scanner
+          - task: SonarQubePublish@5
+
+      - job: ParallelPrint
+        strategy:
+          parallel: 10
+        steps:
+          - script: echo "Hola Mundo"
+
+      - job: CreateFiles
+        steps:
+          - script: |
+              for i in {1..10}
+              do
+                date > "file_$i.txt"
+              done
+              cat file_*.txt
+
+  - stage: DockerBuildPush
+    dependsOn: BuildAndAnalyze
+    jobs:
+      - job: DockerBuild
+        steps:
+          - task: Docker@2
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)'
+              command: 'buildAndPush'
+              Dockerfile: '$(dockerfilePath)'
+              tags: |
+                $(tag)
+
+  - stage: DeployK8s
+    dependsOn: DockerBuildPush
+    jobs:
+      - deployment: DeployApp
+        environment: 'dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: HelmInstaller@1
+                  inputs:
+                    helmVersionToInstall: 'latest'
+
+                - task: HelmDeploy@0
+                  inputs:
+                    connectionType: 'Kubeconfig'
+                    kubeconfig: '$(KUBECONFIG)'
+                    command: 'upgrade'
+                    chartType: 'FilePath'
+                    chartPath: 'helm/docker-getting-started'
+                    releaseName: 'getting-started'
+                    overrideValues: |
+                      image.repository=$(containerRegistry)/$(imageRepository)
+                      image.tag=$(tag)
+                    install: true
+
