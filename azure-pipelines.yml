@@ -2,34 +2,45 @@ trigger:
   - main
 
 pool:
-  name: Prueba-Dummy
+  name: Default  # Tu agente self-hosted
 
 variables:
   dockerRegistryServiceConnection: 'DockerHubServiceConnection'
   imageRepository: 'docker-getting-started'
   containerRegistry: 'jhonbilly'
-  dockerfilePath: 'Dockerfile'
   tag: '$(Build.BuildId)'
+  SONAR_HOST_URL: 'http://172.20.38.158:9000'
+  SONAR_PROJECT_KEY: 'docker-getting-started'
 
 stages:
-  - stage: BuildAndAnalyze
+  - stage: AnalyzeAndBuild
     jobs:
       - job: SonarQubeAnalysis
         steps:
           - task: SonarQubePrepare@5
             inputs:
-              SonarQube: 'SonarQubeServiceConnection'
-              projectKey: 'docker-getting-started'
+              SonarQube: 'SonarQubeServiceConnection'  # Debes crearlo en ADO
               scannerMode: 'CLI'
-          - script: npm install
-          - script: sonar-scanner
-          - task: SonarQubePublish@5
+              configMode: 'manual'
+              cliProjectKey: '$(SONAR_PROJECT_KEY)'
+              cliSources: '.'
+              extraProperties: |
+                sonar.host.url=$(SONAR_HOST_URL)
 
-      - job: ParallelPrint
+          - script: |
+              npm install
+              sonar-scanner -Dsonar.login=$(SONAR_TOKEN)
+            displayName: 'Run SonarQube Scanner'
+
+          - task: SonarQubePublish@5
+            inputs:
+              pollingTimeoutSec: '300'
+
+      - job: ParallelHello
         strategy:
           parallel: 10
         steps:
-          - script: echo "Hola Mundo"
+          - script: echo "Hola Mundo desde job ${{ counter }}"
 
       - job: CreateFiles
         steps:
@@ -41,18 +52,19 @@ stages:
               cat file_*.txt
 
   - stage: DockerBuildPush
-    dependsOn: BuildAndAnalyze
+    dependsOn: AnalyzeAndBuild
     jobs:
-      - job: DockerBuild
+      - job: DockerImage
         steps:
           - task: Docker@2
             inputs:
               containerRegistry: '$(dockerRegistryServiceConnection)'
               repository: '$(imageRepository)'
               command: 'buildAndPush'
-              Dockerfile: '$(dockerfilePath)'
+              Dockerfile: '**/Dockerfile'
               tags: |
                 $(tag)
+
 
   - stage: DeployK8s
     dependsOn: DockerBuildPush
