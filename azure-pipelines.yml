@@ -7,10 +7,11 @@ pool:
 variables:
   dockerRegistryServiceConnection: 'DockerHubServiceConnection'
   imageRepository: 'docker-getting-started'
-  containerRegistry: 'yourdockeruser'
+  containerRegistry: 'jhonbilly'
   tag: '$(Build.BuildId)'
   SONAR_HOST_URL: 'http://172.20.38.158:9000'
   SONAR_PROJECT_KEY: 'docker-getting-started'
+  SONAR_TOKEN:'f4926fec98e5dd8491fd55400c0c167711d23aa2'
 
 stages:
   - stage: AnalyzeAndBuild
@@ -28,14 +29,14 @@ stages:
 
       - job: ParallelHello
         strategy:
-          parallel: 10
+          parallel: 2
         steps:
           - script: echo "Hola Mundo desde job"
 
       - job: CreateFiles
         steps:
           - script: |
-              for i in {1..10}
+              for i in {1..2}
               do
                 date > "file_$i.txt"
               done
