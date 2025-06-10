@@ -7,7 +7,7 @@ pool:
 variables:
   dockerRegistryServiceConnection: 'DockerHubServiceConnection'
   imageRepository: 'docker-getting-started'
-  containerRegistry: 'yourdockeruser'
+  containerRegistry: 'jhonbilly'
   dockerfilePath: 'Dockerfile'
   tag: '$(Build.BuildId)'
 
