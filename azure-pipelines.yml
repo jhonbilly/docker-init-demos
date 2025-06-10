@@ -19,15 +19,17 @@ stages:
       - job: SonarQubeAnalysis
         steps:
           - script: |
+              export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+              export PATH=$JAVA_HOME/bin:$PATH
               cd node/sample
               npm install
               sonar-scanner \
-                -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
-                -Dsonar.sources=. \
-                -Dsonar.host.url=$(SONAR_HOST_URL) \
-                -Dsonar.login=$(SONAR_TOKEN)
-            displayName: 'Run SonarQube Scanner (Local)'
-
+                 -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
+                 -Dsonar.sources=. \
+                 -Dsonar.host.url=$(SONAR_HOST_URL) \
+                 -Dsonar.login=$(SONAR_TOKEN)
+  displayName: 'Run SonarQube Scanner (Local)'
+        
       - job: ParallelHello
         strategy:
           parallel: 2
