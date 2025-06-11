@@ -1,4 +1,4 @@
-trigger: 
+trigger:
   - main
 
 pool:
@@ -17,6 +17,7 @@ stages:
   - stage: AnalyzeAndBuild
     jobs:
       - job: SonarQubeAnalysis
+        displayName: 'NPM Install & SonarQube Analysis'
         steps:
           - script: |
               cd node/
@@ -33,30 +34,27 @@ stages:
                 -Dsonar.host.url=$(SONAR_HOST_URL) \
                 -Dsonar.login=$(SONAR_TOKEN)
             displayName: 'Run SonarQube Scanner (Local)'
+            name: SonarQubeTask
+            continueOnError: true   # <-- Esto permite capturar el error
 
-          # SOLO si el análisis fue exitoso, se ejecuta esto
+          # Analisis exitoso: Solo corre si SonarQube fue OK
           - script: |
+              echo "Análisis SonarQube exitoso, compilando app..."
               cd node/sample
-              npm run build
-            displayName: 'Build app (solo si SonarQube OK)'
+              npm run build || exit 1
+            displayName: 'Build app (SonarQube OK)'
+            condition: succeeded('SonarQubeTask')
 
-      - job: ParallelHello
-        strategy:
-          parallel: 2
-        steps:
-          - script: echo "Hola Mundo desde job"
-
-      - job: CreateFiles
-        steps:
+          # Analisis fallido: Solo corre si SonarQube falló
           - script: |
-              for i in {1..2}
-              do
-                date > "file_$i.txt"
-              done
-              cat file_*.txt
+              echo "El análisis SonarQube FALLÓ. Revisar calidad de código antes de continuar."
+              exit 1
+            displayName: 'Fallo SonarQube, detener pipeline'
+            condition: failed('SonarQubeTask')
 
   - stage: DockerBuildPush
     dependsOn: AnalyzeAndBuild
+    condition: succeeded()   # Solo continúa si el stage previo fue exitoso
     jobs:
       - job: DockerImage
         steps:
@@ -72,6 +70,7 @@ stages:
 
   - stage: DeployK8s
     dependsOn: DockerBuildPush
+    condition: succeeded()   # Solo continúa si el build fue OK
     jobs:
       - deployment: DeployApp
         environment: 'dev'
@@ -82,7 +81,6 @@ stages:
                 - task: HelmInstaller@1
                   inputs:
                     helmVersionToInstall: 'latest'
-
                 - task: HelmDeploy@0
                   inputs:
                     connectionType: 'Kubeconfig'
