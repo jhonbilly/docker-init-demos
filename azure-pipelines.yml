@@ -7,7 +7,7 @@ pool:
 variables:
   dockerRegistryServiceConnection: 'DockerHubServiceConnection'
   imageRepository: 'jhonbilly/docker-getting-started'
-  containerRegistry: 'docker.io'
+  containerRegistry: '$dockerRegistryServiceConnection'
   tag: '$(Build.BuildId)'
   SONAR_HOST_URL: 'http://172.20.38.158:9000'
   SONAR_PROJECT_KEY: 'docker-getting-started'
