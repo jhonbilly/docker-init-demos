@@ -6,8 +6,8 @@ pool:
 
 variables:
   dockerRegistryServiceConnection: 'DockerHubServiceConnection'
-  imageRepository: 'docker-getting-started'
-  containerRegistry: 'jhonbilly'
+  imageRepository: 'jhonbilly/docker-getting-started'
+  containerRegistry: 'docker.io'
   tag: '$(Build.BuildId)'
   SONAR_HOST_URL: 'http://172.20.38.158:9000'
   SONAR_PROJECT_KEY: 'docker-getting-started'
@@ -65,6 +65,11 @@ stages:
     jobs:
       - job: DockerImage
         steps:
+          - task: Docker@2
+            displayName: Login to registry
+            inputs:
+              command: login
+              containerRegistry: 'DockerHubServiceConnection'
           - task: Docker@2
             inputs:
               containerRegistry: '$(dockerRegistryServiceConnection)'
