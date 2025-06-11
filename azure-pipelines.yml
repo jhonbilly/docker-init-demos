@@ -19,7 +19,7 @@ stages:
       - job: SonarQubeAnalysis
         steps:
           - script: |
-              cd node/sample
+              cd node/
               npm install
             displayName: 'NPM Install'
 
