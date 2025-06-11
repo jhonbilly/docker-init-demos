@@ -70,7 +70,7 @@ stages:
               containerRegistry: '$(dockerRegistryServiceConnection)'
               repository: '$(imageRepository)'
               command: 'buildAndPush'
-              Dockerfile: 'node/Dockerfile'
+              Dockerfile: 'node/sample/Dockerfile'
               buildContext: '.'
               tags: |
                 $(tag)
