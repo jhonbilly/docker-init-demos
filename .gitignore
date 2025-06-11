@@ -1,0 +1,5 @@
+# SonarQube
+.scannerwork/
+node/.scannerwork/
+node/sample/.scannerwork/
+node/sample/sonar-scanner-cli-5.0.1.3006-linux.zip
