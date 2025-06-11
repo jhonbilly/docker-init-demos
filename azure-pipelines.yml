@@ -71,7 +71,7 @@ stages:
               repository: '$(imageRepository)'
               command: 'buildAndPush'
               Dockerfile: 'node/sample/Dockerfile'
-              buildContext: '.'
+              buildContext: 'node/sample'
               tags: |
                 $(tag)
 
