@@ -16,45 +16,52 @@ variables:
 stages:
   - stage: AnalyzeAndBuild
     jobs:
+      # 1. SonarQube Analysis (con continueOnError)
       - job: SonarQubeAnalysis
-        displayName: 'NPM Install & SonarQube Analysis'
+        displayName: 'SonarQube Analysis'
+        continueOnError: true
         steps:
           - script: |
               cd node/
               npm install
             displayName: 'NPM Install'
-
           - script: |
               export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
               export PATH=$JAVA_HOME/bin:$PATH
               cd node/sample
-              sonar-scanner -X \
+              sonar-scanner \
                 -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
                 -Dsonar.sources=. \
                 -Dsonar.host.url=$(SONAR_HOST_URL) \
                 -Dsonar.login=$(SONAR_TOKEN)
-            displayName: 'Run SonarQube Scanner (Local)'
-            name: SonarQubeTask
-            continueOnError: true   # <-- Esto permite capturar el error
+            displayName: 'Run SonarQube Scanner'
 
-          # Analisis exitoso: Solo corre si SonarQube fue OK
+      # 2. Build Job: SOLO si SonarQubeAnalysis fue OK
+      - job: BuildApp
+        displayName: 'Build app (solo si SonarQube OK)'
+        dependsOn: SonarQubeAnalysis
+        condition: succeeded('SonarQubeAnalysis')
+        steps:
           - script: |
               echo "Análisis SonarQube exitoso, compilando app..."
               cd node/sample
-              npm run build || exit 1
-            displayName: 'Build app (SonarQube OK)'
-            condition: succeeded('SonarQubeTask')
+              npm run build
+            displayName: 'NPM Build'
 
-          # Analisis fallido: Solo corre si SonarQube falló
+      # 3. Escenario Fallido: SOLO si SonarQubeAnalysis Falla
+      - job: SonarQubeFailed
+        displayName: 'SonarQube Fallido'
+        dependsOn: SonarQubeAnalysis
+        condition: failed('SonarQubeAnalysis')
+        steps:
           - script: |
               echo "El análisis SonarQube FALLÓ. Revisar calidad de código antes de continuar."
               exit 1
-            displayName: 'Fallo SonarQube, detener pipeline'
-            condition: failed('SonarQubeTask')
+            displayName: 'Mensaje Fallo SonarQube'
 
+  # (Las demás stages igual que antes: DockerBuildPush, DeployK8s)
   - stage: DockerBuildPush
     dependsOn: AnalyzeAndBuild
-    condition: succeeded()   # Solo continúa si el stage previo fue exitoso
     jobs:
       - job: DockerImage
         steps:
@@ -70,7 +77,6 @@ stages:
 
   - stage: DeployK8s
     dependsOn: DockerBuildPush
-    condition: succeeded()   # Solo continúa si el build fue OK
     jobs:
       - deployment: DeployApp
         environment: 'dev'
