@@ -1,0 +1,87 @@
+trigger:
+  - main
+
+pool:
+  name: wsl-agent
+
+variables:
+  dockerRegistryServiceConnection: 'DockerHubServiceConnection'
+  imageRepository: 'docker-getting-started'
+  containerRegistry: 'jhonbilly'
+  tag: '$(Build.BuildId)'
+  SONAR_HOST_URL: 'http://172.20.38.158:9000'
+  SONAR_PROJECT_KEY: 'docker-getting-started'
+  SONAR_TOKEN: 'f4926fec98e5dd8491fd55400c0c167711d23aa2'
+
+stages:
+  - stage: AnalyzeAndBuild
+    jobs:
+      - job: SonarQubeAnalysis
+        steps:
+          - script: |
+              cd node/sample
+              npm install || true
+              export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+              export PATH=$JAVA_HOME/bin:$PATH
+              sonar-scanner -X \
+                -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
+                -Dsonar.sources=. \
+                -Dsonar.host.url=$(SONAR_HOST_URL) \
+                -Dsonar.login=$(SONAR_TOKEN)
+            displayName: 'Run SonarQube Scanner (Local)'
+
+      - job: ParallelHello
+        strategy:
+          parallel: 2
+        steps:
+          - script: echo "Hola Mundo desde job"
+
+      - job: CreateFiles
+        steps:
+          - script: |
+              for i in {1..2}
+              do
+                date > "file_$i.txt"
+              done
+              cat file_*.txt
+
+  - stage: DockerBuildPush
+    dependsOn: AnalyzeAndBuild
+    jobs:
+      - job: DockerImage
+        steps:
+          - task: Docker@2
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)'
+              command: 'buildAndPush'
+              Dockerfile: 'node/Dockerfile'
+              buildContext: '.'
+              tags: |
+                $(tag)
+
+  - stage: DeployK8s
+    dependsOn: DockerBuildPush
+    jobs:
+      - deployment: DeployApp
+        environment: 'dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: HelmInstaller@1
+                  inputs:
+                    helmVersionToInstall: 'latest'
+
+                - task: HelmDeploy@0
+                  inputs:
+                    connectionType: 'Kubeconfig'
+                    kubeconfig: '$(KUBECONFIG)'
+                    command: 'upgrade'
+                    chartType: 'FilePath'
+                    chartPath: 'helm/docker-getting-started'
+                    releaseName: 'getting-started'
+                    overrideValues: |
+                      image.repository=$(containerRegistry)/$(imageRepository)
+                      image.tag=$(tag)
+                    install: true
