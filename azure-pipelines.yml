@@ -94,8 +94,8 @@ stages:
                     helmVersionToInstall: 'latest'
                 - task: HelmDeploy@0
                   inputs:
-                    connectionType: 'Kubeconfig'
-                    kubeconfig: '$(KUBECONFIG)'
+                    connectionType: Kubernetes Service Connection
+                    kubernetesServiceEndpoint: 'aks-demo-service-connection' 
                     command: 'upgrade'
                     chartType: 'FilePath'
                     chartPath: 'helm/docker-getting-started'
