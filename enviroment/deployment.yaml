@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: getting-started
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: getting-started
+  template:
+    metadata:
+      labels:
+        app: getting-started
+    spec:
+      containers:
+      - name: app
+        image: jhonbilly/docker-getting-started:89   # <-- Cambia a tu imagen/tag si usas otro
+        ports:
+        - containerPort: 8080                            # Cambia si tu app usa otro puerto
