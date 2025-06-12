@@ -98,7 +98,7 @@ stages:
                     kubernetesServiceEndpoint: 'aks-demo-service-connection' 
                     command: 'upgrade'
                     chartType: 'FilePath'
-                    chartPath: 'helm/docker-getting-started'
+                    chartPath: '$(System.DefaultWorkingDirectory)/helm/docker-getting-started'
                     releaseName: 'getting-started'
                     overrideValues: |
                       image.repository=$(containerRegistry)/$(imageRepository)
