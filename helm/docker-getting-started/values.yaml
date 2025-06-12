@@ -1,0 +1,21 @@
+replicaCount: 1
+
+image:
+  repository: jhonbilly/docker-getting-started
+  tag: "89"
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+   nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: "" #52.255.211.254 #your-app.example.com  # CAMBIA esto por tu dominio o IP pública
+      paths:
+        - path: /
+          pathType: Prefix #tls: []

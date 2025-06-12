@@ -1,0 +1,5 @@
+apiVersion: v2
+name: docker-getting-started
+description: Node.js Hello World app on AKS
+version: 0.1.0
+appVersion: "1.0"
