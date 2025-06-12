@@ -77,8 +77,7 @@ stages:
               command: 'buildAndPush'
               Dockerfile: '**/node/sample/Dockerfile'
               buildContext: '$(Build.SourcesDirectory)/node'
-              tags: |
-                $(tag)
+              tags: '$(Build.BuildId)'
 
   - stage: DeployK8s
     dependsOn: DockerBuildPush
