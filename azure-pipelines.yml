@@ -97,10 +97,10 @@ stages:
                     kubernetesServiceEndpoint: 'aks-demo-service-connection' 
                     command: 'upgrade'
                     chartType: 'FilePath'
-                    chartPath: '$(System.DefaultWorkingDirectory)/helm/docker-getting-started'
+                    chartPath: '$(Build.SourcesDirectory)/helm/docker-getting-started'
                     releaseName: 'getting-started'
                     overrideValues: |
                       image.repository=$(containerRegistry)/$(imageRepository)
                       image.tag=$(tag)
                     install: true
-                    arguments: '--wait --timeout 900s'
+                    arguments: '--wait --timeout 900s --atomic'
