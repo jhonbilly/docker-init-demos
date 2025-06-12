@@ -104,3 +104,4 @@ stages:
                       image.repository=$(containerRegistry)/$(imageRepository)
                       image.tag=$(tag)
                     install: true
+                    arguments: '--wait --timeout 900s'
