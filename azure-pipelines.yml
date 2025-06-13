@@ -100,7 +100,8 @@ stages:
                     chartPath: '$(Build.SourcesDirectory)/helm/docker-getting-started'
                     releaseName: 'getting-started'
                     overrideValues: |
-                      image.repository=$(containerRegistry)/$(imageRepository)
+                      image.repository=jhonbilly/docker-getting-started 
+                      # $(containerRegistry)/$(imageRepository)
                       image.tag=$(tag)
                     install: true
                     arguments: '--wait --timeout 900s --atomic'
