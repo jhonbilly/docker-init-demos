@@ -6,7 +6,7 @@ pool:
 resources:
   pipelines:
     - pipeline: buildPipeline
-      source: azure-pipelines.yml
+      source: jhonbilly.docker-init-demos
       trigger: true
 
 stages:
