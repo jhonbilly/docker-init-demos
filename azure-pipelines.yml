@@ -100,7 +100,7 @@ stages:
                     chartPath: '$(Build.SourcesDirectory)/helm/docker-getting-started'
                     releaseName: 'getting-started'
                     overrideValues: |
-                      image.repository=jhonbilly/docker-getting-started 
+                      image.repository=$(imageRepository)
                       # $(containerRegistry)/$(imageRepository)
                       image.tag=$(tag)
                     install: true
